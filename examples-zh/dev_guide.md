@@ -148,3 +148,65 @@ mcp_server = FastApiMCP(
 理解 `FastAPI`、`app` 装饰器以及 `FastApiMCP` 的各项参数对于构建功能强大且易于维护的 API 和 MCP 服务至关重要。本指南提供了常用参数的中文说明和示例，希望能帮助您更有效地利用这些工具。
 
 建议参考 FastAPI 和 FastApiMCP 的官方文档以获取最全面和最新的信息。
+
+## 5. `AuthConfig` 类 (MCP 认证配置)
+
+`AuthConfig` 类 (定义于 `fastapi_mcp.types`) 用于在创建 `FastApiMCP` 服务器时配置认证和授权机制。它允许您指定如何保护 MCP 工具，以及客户端应如何进行身份验证。
+
+**使用示例 (参考 `examples-zh/08_auth_example_token_passthrough.py`):**
+
+```python
+from fastapi import FastAPI, Depends
+from fastapi.security import HTTPBearer
+from fastapi_mcp import FastApiMCP, AuthConfig
+
+app = FastAPI()
+token_auth_scheme = HTTPBearer() # 定义一个 HTTP Bearer Token 认证方案
+
+# 一个受保护的 FastAPI 路由示例
+@app.get("/private")
+async def private_route(token: str = Depends(token_auth_scheme)):
+    return {"token": token.credentials}
+
+# 初始化 FastApiMCP 时传入 AuthConfig
+mcp_server = FastApiMCP(
+    app,
+    name="受保护的 MCP 服务",
+    auth_config=AuthConfig(
+        dependencies=[Depends(token_auth_scheme)], # 关键：传递 FastAPI 依赖项
+        # 其他 AuthConfig 参数可根据需要配置
+    )
+)
+
+mcp_server.mount() # 挂载 MCP 服务
+```
+
+在上面的示例中，`AuthConfig` 的 `dependencies` 参数被用来传递一个 FastAPI 依赖项 (`Depends(token_auth_scheme)`)。这意味着当 MCP 客户端尝试调用通过此 `mcp_server` 暴露的任何工具时，FastAPI 的依赖注入系统会首先执行 `token_auth_scheme`。如果认证失败（例如，没有提供有效的 Bearer Token），依赖项会引发 HTTP 401 或 403 错误，从而阻止工具的执行，并向 MCP 客户端指示需要认证。
+
+**`AuthConfig` 主要参数说明:**
+
+*   `version` (Literal["2025-03-26"], 可选): 用于设置授权的 MCP 规范版本。目前仅支持 `"2025-03-26"`。默认值: `"2025-03-26"`。
+*   `dependencies` (Optional[Sequence[params.Depends]], 可选): FastAPI 依赖项列表 (使用 `Depends()`)。这些依赖项用于检查认证或授权，并在请求未经认证或授权时引发 401 或 403 错误。这是触发客户端启动 OAuth 流程或传递认证信息的关键机制。
+    *   如示例所示，您可以传递一个或多个 FastAPI 依赖项，这些依赖项将应用于所有通过此 `FastApiMCP` 实例暴露的 MCP 工具。
+*   `issuer` (Optional[str], 可选): OAuth 2.0 服务器的颁发者 (issuer)。如果不提供 `custom_oauth_metadata`，则此项为必需。通常是应用的根 URL 或 OAuth 提供商的 URL (例如 Auth0 的 `https://your-tenant.auth0.com`)。
+*   `oauth_metadata_url` (Optional[StrHttpUrl], 可选): OAuth 提供商元数据端点的完整 URL。如果未提供，FastAPI-MCP 会尝试基于 `issuer` 和 `metadata_path` (内部默认路径) 进行猜测。仅当 `setup_proxies` 为 `True` 时相关。
+*   `authorize_url` (Optional[StrHttpUrl], 可选): OAuth 提供商授权端点的 URL (例如 `https://app.example.com/oauth/authorize`)。
+*   `audience` (Optional[str], 可选): 默认的受众 (audience)。用于某些 MCP 客户端可能不指定受众的情况，作为请求 OAuth 提供商时的默认值。
+*   `default_scope` (str, 可选): 默认的作用域 (scope)。用于某些 MCP 客户端可能不指定作用域的情况。默认值: `"openid profile email"`。
+*   `client_id` (Optional[str], 可选): 默认的客户端 ID。如果客户端未指定客户端 ID，则在向 OAuth 提供商发起请求时使用此值。仅当 `setup_proxies` 为 `True` 时强制要求。
+*   `client_secret` (Optional[str], 可选): `client_id` 对应的客户端密钥。仅当 `setup_proxies` 和 `setup_fake_dynamic_registration` 均为 `True` 时强制要求。
+*   `custom_oauth_metadata` (Optional[OAuthMetadataDict], 可选): 自定义的 OAuth 元数据。如果您的 OAuth 流程与 MCP 开箱即用兼容，可以使用此选项提供元数据。否则，应将 `setup_proxies` 设置为 `True` 以自动设置 MCP 兼容的代理。
+*   `setup_proxies` (bool, 可选): 是否自动在原始 OAuth 提供商的端点周围设置 MCP 兼容的代理。默认值: `False`。
+    *   如果为 `True`，FastAPI-MCP 会尝试代理 OAuth 流程中的关键端点 (如元数据、授权端点)，使其更符合 MCP 规范。
+*   `metadata_path` (str, 可选): OAuth 元数据端点的路径。默认值: `"/.well-known/oauth-authorization-server"`。
+*   `authorize_path` (str, 可选): 授权端点代理的路径。默认值: `"/oauth/authorize"`。
+*   `register_path` (Optional[str], 可选): 动态客户端注册端点代理的路径。默认值: `"/oauth/register"`。
+*   `setup_fake_dynamic_registration` (bool, 可选): 是否设置一个伪造的动态客户端注册端点。默认值: `False`。
+
+**验证逻辑:**
+`AuthConfig` 包含一个模型验证器 (`validate_required_fields`)，确保在特定条件下提供了必需的字段：
+*   必须提供 `issuer`、`custom_oauth_metadata` 或 `dependencies` 中的至少一个。
+*   如果 `setup_proxies` 为 `True`，则必须提供 `client_id`。
+*   如果 `setup_proxies` 和 `setup_fake_dynamic_registration` 均为 `True`，则必须提供 `client_secret`。
+
+选择合适的 `AuthConfig` 参数组合取决于您的具体认证需求和 OAuth 提供商的配置。对于简单的 Token 直通 (如 Bearer Token)，通常仅配置 `dependencies` 就足够了，如 `08_auth_example_token_passthrough.py` 所示。对于更复杂的 OAuth 2.0 流程，可能需要配置 `issuer`, `client_id`, `setup_proxies` 等参数。

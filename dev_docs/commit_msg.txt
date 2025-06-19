@@ -1,1 +1,1 @@
-新增 FastAPI 与 FastApiMCP 中文开发指南 (dev_guide.md)，ver 0.1.0.0.dev
+更新开发指南，添加 AuthConfig 中文说明，ver 0.1.1.0.dev
