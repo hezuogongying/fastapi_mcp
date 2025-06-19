@@ -1,0 +1,6 @@
+pytest
+trio
+coverage
+pytest-cov
+pytest-trio
+pytest-asyncio

@@ -38,6 +38,8 @@ uv add fastapi-mcp
 
 ```bash
 pip install fastapi-mcp
+
+pip install -e . (bwx)
 ```
 
 ## 基本用法

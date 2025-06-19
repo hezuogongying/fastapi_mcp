@@ -1,0 +1,342 @@
+{
+  "paths": {
+    "/items/": {
+      "get": {
+        "tags": [
+          "items"
+        ],
+        "summary": "List Items",
+        "description": "列出数据库中的所有物品。\n\n支持分页功能。\n:param skip: int, 可选, 默认为 0。跳过的物品数量，用于分页。\n:param limit: int, 可选, 默认为 10。返回的物品最大数量，用于分页。\n:return: List[Item], 包含物品对象的列表。",
+        "operationId": "list_items",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  },
+                  "title": "Response List Items"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "items"
+        ],
+        "summary": "Create Item",
+        "description": "在数据库中创建一个新的物品。\n\n返回创建的物品及其分配的 ID。\n:param item: Item, 必需。要创建的物品对象，包含物品的详细信息。\n:return: Item, 创建成功的物品对象。",
+        "operationId": "create_item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{item_id}": {
+      "get": {
+        "tags": [
+          "items"
+        ],
+        "summary": "Read Item",
+        "description": "根据物品 ID 获取特定物品的详细信息。\n\n如果物品不存在，则引发 404 HTTP 错误。\n:param item_id: int, 必需。要检索的物品的 ID。\n:return: Item, 找到的物品对象。\n:raises HTTPException: 如果具有指定 ID 的物品未找到，则状态码为 404。",
+        "operationId": "get_item",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "items"
+        ],
+        "summary": "Update Item",
+        "description": "更新一个已存在的物品。\n\n如果物品不存在，则引发 404 HTTP 错误。\n:param item_id: int, 必需。要更新的物品的 ID。\n:param item: Item, 必需。包含物品更新后信息的对象。\n:return: Item, 更新后的物品对象。\n:raises HTTPException: 如果具有指定 ID 的物品未找到，则状态码为 404。",
+        "operationId": "update_item",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "items"
+        ],
+        "summary": "Delete Item",
+        "description": "从数据库中删除一个物品。\n\n如果物品不存在，则引发 404 HTTP 错误。\n:param item_id: int, 必需。要删除的物品的 ID。\n:return: dict, 包含删除成功消息的字典。\n:raises HTTPException: 如果具有指定 ID 的物品未找到，则状态码为 404。",
+        "operationId": "delete_item",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/search/": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Items",
+        "description": "根据多种筛选条件搜索物品。\n\n返回匹配搜索条件的物品列表。\n:param q: str, 可选。搜索查询字符串，用于匹配物品名称或描述。\n:param min_price: float, 可选。筛选条件：物品的最低价格。\n:param max_price: float, 可选。筛选条件：物品的最高价格。\n:param tags: List[str], 可选。筛选条件：物品必须包含的标签列表。\n:return: List[Item], 匹配所有筛选条件的物品列表。",
+        "operationId": "search_items",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "搜索查询字符串，匹配物品名称或描述",
+              "title": "Q"
+            },
+            "description": "搜索查询字符串，匹配物品名称或描述"
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "最低价格筛选",
+              "title": "Min Price"
+            },
+            "description": "最低价格筛选"
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "最高价格筛选",
+              "title": "Max Price"
+            },
+            "description": "最高价格筛选"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "根据标签列表进行筛选，物品需包含所有指定标签",
+              "default": [],
+              "title": "Tags"
+            },
+            "description": "根据标签列表进行筛选，物品需包含所有指定标签"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  },
+                  "title": "Response Search Items"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
